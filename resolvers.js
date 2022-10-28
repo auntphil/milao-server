@@ -36,7 +36,6 @@ const resolvers = {
 
     Reaction: {
         sender: parent => {
-            console.log(parent)
             return User.findById(parent.senderID)
                 .then( user => user._doc)
                 .catch(err => console.error(err))
