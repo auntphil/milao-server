@@ -76,6 +76,13 @@ const resolvers = {
             return userObject.save()
                 .then(result => result._doc )
                 .catch(err => console.error(err))
+        },
+
+        removeReaction (parent, args, context, info){
+            const {id} = args
+            return Reaction.findByIdAndRemove(id)
+                    .then( reaction => reaction._doc)
+                    .catch(err => console.error(err))
         }
     }
 }

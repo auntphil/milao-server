@@ -29,6 +29,8 @@ const typeDefs = `#graphql
         addMessage (senderID: String!, message: String!, date: Float!, extra: String!): Message
         addReaction (senderID: String!, reaction: String!, msgID: String! ): Reaction
         addUser(name:String!): User
+
+        removeReaction (id: ID!): Reaction
     }
 `
 
