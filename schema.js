@@ -14,7 +14,7 @@ const typeDefs = `#graphql
         _id: ID!,
         sender: User!,  
         message: String!,
-        date: String!,
+        date: Float!,
         extra: String!,
         reaction: [Reaction]
     }
@@ -26,7 +26,7 @@ const typeDefs = `#graphql
     }
 
     type Mutation {
-        addMessage (senderID: String!, message: String!, date: String!, extra: String!): Message
+        addMessage (senderID: String!, message: String!, date: Float!, extra: String!): Message
         addReaction (senderID: String!, reaction: String!, msgID: String! ): Reaction
         addUser(name:String!): User
     }
