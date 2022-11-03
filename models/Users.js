@@ -1,4 +1,5 @@
 import { Schema, mongoose } from 'mongoose'
+import bcrypt from 'bcrypt'
 
 const UserSchema = new Schema({
     display: {
@@ -16,6 +17,21 @@ const UserSchema = new Schema({
     token: {
         type: String,
         require: false
+    },
+    counter: {
+        type: Number,
+        require: true
+    }
+})
+
+UserSchema.pre('save', async function (next) {
+    try{
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(this.password, salt);
+        this.password = hash
+        next()
+    }catch(error){
+        next(error)
     }
 })
 

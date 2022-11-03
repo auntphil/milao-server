@@ -28,14 +28,12 @@ const typeDefs = `#graphql
     }
 
     input MessageInput {
-        userId: String!
         message: String!
         date: Float!
         extra: String!
     }
 
     input ReactionInput {
-        userId: String!
         reaction: String!
         messageId: String!
     }
@@ -45,12 +43,19 @@ const typeDefs = `#graphql
         password: String!
     }
 
+    input LoginInput {
+        email: String!
+        password: String!
+    }
+
+
     type Mutation {
         createMessage (messageInput: MessageInput): Message
         addReaction (reactionInput: ReactionInput ): Reaction
         registerUser(registerInput: RegisterInput): User
 
-        logout(userId: String!): User
+        login(loginInput: LoginInput): User
+        logout: User
 
         removeReaction (id: ID!): Reaction
     }

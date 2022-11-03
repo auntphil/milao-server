@@ -1,24 +1,28 @@
 import {Message} from './models/Messages.js'
 import {Reaction} from './models/Reactions.js'
 import {User} from './models/Users.js'
-import bcrypt from 'bcrypt'
 
-import jwt from 'jsonwebtoken'
-import mongoose from 'mongoose'
+import { createAccssToken, createRefreshToken, decodeAccessToken } from './utils/JWTTokens.js'
+import { ComparePassword } from './utils/Bcrypt.js'
+import { checkAuthorization } from './utils/Permissions.js'
 
 const resolvers = {
     Query: {
-        messages (parent, args, context, info){
+        messages: async (parent, args, context, info) => {
+            if(!await checkAuthorization(context.user))throw new Error("Not Authorized")
             return Message.find()
                 .then( message => message.map(r => ({...r._doc})))
                 .catch(err => console.error(err))
         },
-        users (parent, args, context, info){
+        users: async (parent, args, context, info) => {
+            if(!await checkAuthorization(context.user))throw new Error("Not Authorized")
+
             return User.find()
                 .then(user=> user.map(r => ({...r._doc})))
                 .catch(err => console.error(err))
         },
-        user (parent, args, context, info){
+        user: async (parent, args, context, info) => {
+            if(!await checkAuthorization(context.user))throw new Error("Not Authorized")
             const { id } = args
             return User.findById(id)
                 .then( user => user._doc)
@@ -49,15 +53,16 @@ const resolvers = {
     },
 
     Mutation: {
-        createMessage (_, {messageInput: {userId, message, date, extra}}){
-            const msgObject = new Message({ userId, message, date, extra })
+        createMessage (_, {messageInput: { message, date, extra}}){
+            const msgObject = new Message({ userId: context.user._id, message, date, extra })
             return msgObject.save()
                 .then(result => result._doc)
                 .catch (err => console.error(err))
         },
         
-        addReaction (_, {reactionInput: {userId, reaction, messageId}}){
-            const reactionObject = new Reaction({userId, reaction, messageId})
+        addReaction (_, {reactionInput: {reaction, messageId}}){
+            if(!context.user)throw new Error("Not Authorized")
+            const reactionObject = new Reaction({userId: context.user._id, reaction, messageId})
             return reactionObject.save()
                 .then(result => result._doc)
                 .catch (err => console.error(err))
@@ -73,30 +78,17 @@ const resolvers = {
             const existingUser = await User.findOne({ email })
             if(existingUser) throw new Error("User already exists") 
 
-            //Encrypt Password
-            const salt = await bcrypt.genSalt(10);
-            const hash = await bcrypt.hash(password, salt);
-
             //creating new user
             const userObject = new User({
                 email: email.toLowerCase(),
-                password: hash
+                password,
+                counter: 0
             })
 
 
-            //Create Access Token
-            const accessToken = jwt.sign(
-                {_id: userObject._id, email: email.toLowerCase() },
-                process.env.ACCESS_TOKEN_SECRET,
-                { expiresIn: '15s'}
-                )
-                
-            //creating refresh token
-            const refreshToken = jwt.sign(
-                {_id: userObject._id, email: email.toLowerCase() },
-                process.env.ACCESS_TOKEN_SECRET,
-                {}
-            )
+            //Create Tokens
+            const accessToken = createAccssToken(userObject, email)
+            const refreshToken = createRefreshToken(userObject, email)
             userObject.token = refreshToken
 
             return userObject.save()
@@ -108,13 +100,42 @@ const resolvers = {
                 .catch(err => console.error(err))
         },
 
-        logout(_, args){
-            const {userId} = args
+        async login(_, {loginInput: { email, password }}){
+            //Getting User
+            const user = await User.findOne({ email })
+                .then(user => user)
 
-            User.findOneAndUpdate({_id: userId},{token: null}, (err, doc) => {
-                if(err) throw new Error("Could Not Logout")
+            //Checking Username
+            if(!user) throw new Error("Password or Email is incorrect.")
+
+            //Checking PAssword
+            await ComparePassword(password, user)
+            
+            //Create Tokens
+            const accessToken = await createAccssToken(user, email)
+            const refreshToken = await createRefreshToken(user, email)
+            user.token = accessToken
+            user.refresh = refreshToken
+
+
+            User.findOneAndUpdate({_id: user._id},{token: refreshToken}, (err, doc) => {
+                if(err) throw new Error("Could Not Login")
                 return doc
             })
+
+            return user
+
+
+        },
+
+        logout(parent, args, context, info){
+            try{
+                User.findOneAndUpdate({_id: context.user._id},{token: null, counter: context.user.counter+1}, (err, doc) => {
+                    return doc
+                })
+            }catch(err){
+                throw new Error(err)
+            }
 
         },
 
