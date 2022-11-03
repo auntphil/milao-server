@@ -1,4 +1,8 @@
-import { Message, Reaction, User } from './model.js'
+import {Message} from './models/Messages.js'
+import {Reaction} from './models/Reactions.js'
+import {User} from './models/Users.js'
+
+import jwt from 'jsonwebtoken'
 
 const resolvers = {
     Query: {
@@ -43,38 +47,57 @@ const resolvers = {
     },
 
     Mutation: {
-        addMessage (parent, args, context, info){
-            const {senderID, message, date, extra} = args
-            const msgObject = new Message({
-                senderID,
-                message,
-                date,
-                extra
-            })
+        createMessage (_, {messageInput: {userId, message, date, extra}}){
+            const msgObject = new Message({ userId, message, date, extra })
             return msgObject.save()
                 .then(result => result._doc)
                 .catch (err => console.error(err))
         },
         
-        addReaction (parent, args, context, info){
-            const {senderID, reaction, msgID} = args
-            const reactionObject = new Reaction({
-                senderID,
-                reaction,
-                msgID
-            })
+        addReaction (_, {reactionInput: {userId, reaction, messageId}}){
+            const reactionObject = new Reaction({userId, reaction, messageId})
             return reactionObject.save()
                 .then(result => result._doc)
                 .catch (err => console.error(err))
         },
 
-        addUser (parent, args, context, info){
-            const {name} = args
+        async registerUser (_, {registerInput: {email, password}}){
+
+            //checking if chat already has two users
+            const countUser = await User.countDocuments()
+            if(countUser >= 2 ) throw new Error("Chat is full")
+
+            //checking if email is already used
+            const existingUser = await User.findOne({ email })
+            if(existingUser) throw new Error("User already exists") 
+
+            //creating new user
             const userObject = new User({
-                name
+                email: email.toLowerCase(),
+                password
             })
+
+            //Create Access Token
+            const accessToken = jwt.sign(
+                {_id: userObject._id, email: email.toLowerCase() },
+                process.env.ACCESS_TOKEN_SECRET,
+                { expiresIn: '15s'}
+                )
+                
+            //creating refresh token
+            const refreshToken = jwt.sign(
+                {_id: userObject._id, email: email.toLowerCase() },
+                process.env.ACCESS_TOKEN_SECRET,
+                {}
+            )
+            userObject.token = refreshToken
+
             return userObject.save()
-                .then(result => result._doc )
+                .then(result => {
+                    const user = result._doc
+                    user.refresh = accessToken
+                    return user
+                })
                 .catch(err => console.error(err))
         },
 

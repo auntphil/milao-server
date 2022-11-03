@@ -1,7 +1,9 @@
 const typeDefs = `#graphql
     type User {
         _id: ID!,
-        name: String!
+        email: String!
+        token: String!
+        refresh: String!
     }
     type Reaction {
         _id: ID!,
@@ -25,10 +27,30 @@ const typeDefs = `#graphql
         user(id: ID!): User
     }
 
+    input MessageInput {
+        userId: String!
+        message: String!
+        date: Float!
+        extra: String!
+    }
+
+    input ReactionInput {
+        userId: String!
+        reaction: String!
+        messageId: String!
+    }
+
+    input RegisterInput {
+        email: String!
+        password: String!
+    }
+
     type Mutation {
-        addMessage (senderID: String!, message: String!, date: Float!, extra: String!): Message
-        addReaction (senderID: String!, reaction: String!, msgID: String! ): Reaction
-        addUser(name:String!): User
+        createMessage (messageInput: MessageInput): Message
+        addReaction (reactionInput: ReactionInput ): Reaction
+        registerUser(registerInput: RegisterInput): User
+
+        logout(userId: String!): User
 
         removeReaction (id: ID!): Reaction
     }
