@@ -1,6 +1,7 @@
 import {Message} from './models/Messages.js'
 import {Reaction} from './models/Reactions.js'
 import {User} from './models/Users.js'
+import bcrypt from 'bcrypt'
 
 import jwt from 'jsonwebtoken'
 
@@ -71,11 +72,16 @@ const resolvers = {
             const existingUser = await User.findOne({ email })
             if(existingUser) throw new Error("User already exists") 
 
+            //Encrypt Password
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(password, salt);
+
             //creating new user
             const userObject = new User({
                 email: email.toLowerCase(),
-                password
+                password: hash
             })
+
 
             //Create Access Token
             const accessToken = jwt.sign(
