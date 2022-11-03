@@ -7,7 +7,7 @@ import * as dotenv from 'dotenv'
 
 dotenv.config()
 
-mongoose.connect(`mongodb://192.168.0.51:7017/milao`)
+mongoose.connect(process.env.MONGODB)
     .then( () => {
         console.log('MongoDB connected successfully')
     })

@@ -4,6 +4,7 @@ import {User} from './models/Users.js'
 import bcrypt from 'bcrypt'
 
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
 
 const resolvers = {
     Query: {
@@ -105,6 +106,16 @@ const resolvers = {
                     return user
                 })
                 .catch(err => console.error(err))
+        },
+
+        logout(_, args){
+            const {userId} = args
+
+            User.findOneAndUpdate({_id: userId},{token: null}, (err, doc) => {
+                if(err) throw new Error("Could Not Logout")
+                return doc
+            })
+
         },
 
         removeReaction (parent, args, context, info){
