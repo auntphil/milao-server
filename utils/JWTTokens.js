@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 //Create Access Token
 const createAccssToken = (userObject, email) => {
     return jwt.sign(
-        {_id: userObject._id, email: email.toLowerCase(), counter: userObject.counter },
+        {_id: userObject._id, email: email.toLowerCase() },
             process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: '30m'}
     )
@@ -12,7 +12,7 @@ const createAccssToken = (userObject, email) => {
 //creating refresh token
 const createRefreshToken = (userObject, email) => {
     return jwt.sign(
-        {_id: userObject._id, email: email.toLowerCase() },
+        {_id: userObject._id, email: email.toLowerCase(), counter: userObject.counter },
         process.env.ACCESS_TOKEN_SECRET,
         {}
     )
