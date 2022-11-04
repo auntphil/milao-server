@@ -14,10 +14,6 @@ const UserSchema = new Schema({
         type: String,
         required: true
     },
-    token: {
-        type: String,
-        require: false
-    },
     counter: {
         type: Number,
         require: true
