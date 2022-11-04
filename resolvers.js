@@ -2,7 +2,7 @@ import {Message} from './models/Messages.js'
 import {Reaction} from './models/Reactions.js'
 import {User} from './models/Users.js'
 
-import { createAccssToken, createRefreshToken, decodeAccessToken } from './utils/JWTTokens.js'
+import { createAccssToken, createRefreshToken } from './utils/JWTTokens.js'
 import { ComparePassword } from './utils/Bcrypt.js'
 import { checkAuthorization } from './utils/Permissions.js'
 
@@ -52,19 +52,38 @@ const resolvers = {
     },
     
     Mutation: {
-        createMessage (_, {messageInput: { message, date, extra}}){
+        createMessage: async (parent, args, context, info) => {
+            if(!await checkAuthorization(context.user))throw new Error("Not Authorized")
+            const { message, date, extra} = args.messageInput
             const msgObject = new Message({ userId: context.user._id, message, date, extra })
             return msgObject.save()
             .then(result => result._doc)
             .catch (err => console.error(err))
         },
         
-        addReaction (_, {reactionInput: {reaction, messageId}}){
-            if(!context.user)throw new Error("Not Authorized")
-            const reactionObject = new Reaction({userId: context.user._id, reaction, messageId})
+        addReaction: async (parent, args, context, info) => {
+            if(!await checkAuthorization(context.user))throw new Error("Not Authorized")
+            const {reaction, msgId} = args.reactionInput
+            
+            //Check if user has already left a reaction
+            const reactionDb = await Reaction.findOne({userId: context.user._id, msgId})
+            if(reactionDb) throw new Error("Message already has reaction from user")
+            
+            const reactionObject = new Reaction({userId: context.user._id, reaction, msgId})
             return reactionObject.save()
                 .then(result => result._doc)
                 .catch (err => console.error(err))
+        },
+        
+        removeReaction: async (parent, args, context, info) => {
+            if(!await checkAuthorization(context.user))throw new Error("Not Authorized")
+            const {id} = args
+            return Reaction.deleteOne({userId: context.user._id, _id:id})
+                .then( res => {
+                    res._id = id
+                    return res
+                })
+                .catch(err => console.error(err))
         },
 
         async registerUser (_, {registerInput: {email, password}}){
@@ -88,12 +107,12 @@ const resolvers = {
             //Create Tokens
             const accessToken = createAccssToken(userObject, email)
             const refreshToken = createRefreshToken(userObject, email)
-            userObject.token = refreshToken
 
             return userObject.save()
                 .then(result => {
                     const user = result._doc
-                    user.refresh = accessToken
+                    user.token = accessToken
+                    user.refresh = refreshToken
                     return user
                 })
                 .catch(err => console.error(err))
@@ -117,33 +136,19 @@ const resolvers = {
             user.refresh = refreshToken
 
 
-            User.findOneAndUpdate({_id: user._id},{token: refreshToken}, (err, doc) => {
+            User.findOneAndUpdate({_id: user._id}, (err, doc) => {
                 if(err) throw new Error("Could Not Login")
                 return doc
             })
-
             return user
-
-
         },
 
-        logout(parent, args, context, info){
-            try{
-                User.findOneAndUpdate({_id: context.user._id},{token: null, counter: context.user.counter+1}, (err, doc) => {
-                    return doc
-                })
-            }catch(err){
-                throw new Error(err)
-            }
-
+        logout: async (parent, args, context, info) => {
+            if(!await checkAuthorization(context.user))throw new Error("Not Authorized")
+            return User.findOneAndUpdate({_id: context.user._id},{$inc: {counter: 1}})
+                .then(res => { return {acknowledged: true, success: true }})
+                .catch(err => { return {acknowledged: true, success: false, message: err }})
         },
-
-        removeReaction (parent, args, context, info){
-            const {id} = args
-            return Reaction.findByIdAndRemove(id)
-                    .then( reaction => reaction._doc)
-                    .catch(err => console.error(err))
-        }
     }
 }
 

@@ -21,6 +21,18 @@ const typeDefs = `#graphql
         reaction: [Reaction]
     }
 
+    type DeleteStatus {
+        _id: ID
+        acknowledged: Boolean,
+        deletedCount: Float
+    }
+
+    type LogoutStatus {
+        acknowledged: Boolean
+        success: Boolean
+        message: String
+    }
+
     type Query {
         messages: [Message]
         users: [User]
@@ -48,16 +60,15 @@ const typeDefs = `#graphql
         password: String!
     }
 
-
     type Mutation {
         createMessage (messageInput: MessageInput): Message
         addReaction (reactionInput: ReactionInput ): Reaction
         registerUser(registerInput: RegisterInput): User
 
         login(loginInput: LoginInput): User
-        logout: User
+        logout: LogoutStatus
 
-        removeReaction (id: ID!): Reaction
+        removeReaction (id: ID!): DeleteStatus
     }
 `
 
