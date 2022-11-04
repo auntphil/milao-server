@@ -29,13 +29,12 @@ const resolvers = {
                 .catch(err => console.error(err))
         }
     },
-
     
     Message: {
         reaction: parent => {
-            return Reaction.find({msgID: parent._id})
-            .then( reaction => reaction.map(r => ({...r._doc})))
-            .catch(err => console.error(err))
+            return Reaction.find({msgId: parent._id})
+                .then( reaction => reaction.map(r => ({...r._doc})))
+                .catch(err => console.error(err))
         },
         sender: parent => {
             return User.findById(parent.senderID)
@@ -43,7 +42,7 @@ const resolvers = {
                 .catch(err => console.error(err))
         }
     },
-
+    
     Reaction: {
         sender: parent => {
             return User.findById(parent.senderID)
@@ -51,13 +50,13 @@ const resolvers = {
                 .catch(err => console.error(err))
         }
     },
-
+    
     Mutation: {
         createMessage (_, {messageInput: { message, date, extra}}){
             const msgObject = new Message({ userId: context.user._id, message, date, extra })
             return msgObject.save()
-                .then(result => result._doc)
-                .catch (err => console.error(err))
+            .then(result => result._doc)
+            .catch (err => console.error(err))
         },
         
         addReaction (_, {reactionInput: {reaction, messageId}}){
