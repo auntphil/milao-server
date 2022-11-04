@@ -7,14 +7,14 @@ const typeDefs = `#graphql
     }
     type Reaction {
         _id: ID!,
-        sender: User!,
+        user: User!,
         reaction: String!,
-        msgID: String!
+        msgId: String!
     }
 
     type Message {
         _id: ID!,
-        sender: User!,  
+        user: User!,  
         message: String!,
         date: Float!,
         extra: String!,
@@ -35,7 +35,7 @@ const typeDefs = `#graphql
 
     input ReactionInput {
         reaction: String!
-        messageId: String!
+        msgId: String!
     }
 
     input RegisterInput {

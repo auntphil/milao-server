@@ -36,18 +36,18 @@ const resolvers = {
                 .then( reaction => reaction.map(r => ({...r._doc})))
                 .catch(err => console.error(err))
         },
-        sender: parent => {
-            return User.findById(parent.senderID)
+        user: parent => {
+            return User.findById(parent.userId)
                 .then( user => user._doc)
                 .catch(err => console.error(err))
         }
     },
     
     Reaction: {
-        sender: parent => {
-            return User.findById(parent.senderID)
-                .then( user => user._doc)
-                .catch(err => console.error(err))
+        user: parent => {
+            return User.findById(parent.userId)
+            .then( user => user._doc)
+            .catch(err => console.error(err))
         }
     },
     

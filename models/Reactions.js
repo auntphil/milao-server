@@ -1,7 +1,7 @@
 import { Schema, mongoose } from 'mongoose'
 
 const ReactionSchema = new Schema({
-    senderID: {
+    userId: {
         type: String,
         required: true
     },
@@ -9,7 +9,7 @@ const ReactionSchema = new Schema({
         type: String,
         required: true
     },
-    messageId: {
+    msgId: {
         type: String,
         required: true
     }
