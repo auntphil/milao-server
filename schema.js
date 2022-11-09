@@ -17,7 +17,6 @@ const typeDefs = `#graphql
         user: User!,  
         message: String!,
         date: Float!,
-        extra: String!,
         reaction: [Reaction]
     }
 

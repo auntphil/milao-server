@@ -2,7 +2,7 @@ import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { mongoose } from 'mongoose'
 import { typeDefs } from './schema.js'
-import { resolvers } from './resolvers.js'
+import { resolvers } from './resolvers/resolvers.js'
 import * as dotenv from 'dotenv'
 import { decodeAccessToken } from './utils/JWTTokens.js';
 
