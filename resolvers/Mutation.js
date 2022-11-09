@@ -2,9 +2,9 @@ import {Message} from '../models/Messages.js'
 import {Reaction} from '../models/Reactions.js'
 import {User} from '../models/Users.js'
 
-import { createAccssToken, createRefreshToken } from '../utils/JWTTokens.js'
+import { createAccssToken, createRefreshToken, decodeRefreshToken } from '../utils/JWTTokens.js'
 import { ComparePassword } from '../utils/Bcrypt.js'
-import { checkAuthorization } from '../utils/Permissions.js'
+import { checkAuthorization, checkRefresh } from '../utils/Permissions.js'
 
 const Mutation = {
     /**
@@ -126,7 +126,31 @@ const Mutation = {
         return User.findOneAndUpdate({_id: context.user._id},{$inc: {counter: 1}})
             .then(res => { return {acknowledged: true, success: true }})
             .catch(err => { return {acknowledged: true, success: false, message: err }})
-    },
+        },
+        
+        /**
+         * Access Token refresh
+         */
+        
+        validateToken: async(_, {tokenInput: {refreshToken}}) =>{
+            const token = decodeRefreshToken(refreshToken)
+            if(!await checkRefresh(token))throw new Error("Not Authorized")
+            
+            return User.findOneAndUpdate({_id: token._id},{$inc: {counter: 1}}, { new: true })
+            .then(async res => { 
+                const user = res._doc
+                //Create Tokens
+                const accessToken = await createAccssToken(user, user.email)
+                const refreshToken = await createRefreshToken(user, user.email)
+
+                //Adding new tokens to user
+                user.token = accessToken
+                user.refresh = refreshToken
+                return user
+            })
+            .catch(err => { return {acknowledged: true, success: false, message: err }})
+    }
+
 }
 
 export default Mutation

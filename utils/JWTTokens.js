@@ -13,7 +13,7 @@ const createAccssToken = (userObject, email) => {
 const createRefreshToken = (userObject, email) => {
     return jwt.sign(
         {_id: userObject._id, email: email.toLowerCase(), counter: userObject.counter },
-        process.env.ACCESS_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET,
         {}
     )
 
@@ -27,4 +27,13 @@ const decodeAccessToken = (token,) => {
     })
 }
 
-export {createAccssToken, createRefreshToken, decodeAccessToken}
+//Decode Refresh Token
+const decodeRefreshToken = (token,) => {
+    return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET, (err, data) => {
+        if(err) return null
+        return data
+    })
+}
+
+
+export {createAccssToken, createRefreshToken, decodeAccessToken, decodeRefreshToken}

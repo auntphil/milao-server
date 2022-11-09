@@ -59,6 +59,10 @@ const typeDefs = `#graphql
         password: String!
     }
 
+    input TokenInput {
+        refreshToken: String!
+    }
+
     type Mutation {
         createMessage (messageInput: MessageInput): Message
         addReaction (reactionInput: ReactionInput ): Reaction
@@ -66,6 +70,7 @@ const typeDefs = `#graphql
 
         login(loginInput: LoginInput): User
         logout: LogoutStatus
+        validateToken (tokenInput: TokenInput): User
 
         removeReaction (id: ID!): DeleteStatus
     }
