@@ -1,3 +1,5 @@
+import crypto from 'crypto'
+
 import {Message} from '../models/Messages.js'
 import {Reaction} from '../models/Reactions.js'
 import {User} from '../models/Users.js'
@@ -70,7 +72,7 @@ const Mutation = {
         const userObject = new User({
             email: email.toLowerCase(),
             password,
-            counter: 0
+            counter: crypto.randomBytes(20).toString('hex')
         })
 
 
@@ -102,6 +104,8 @@ const Mutation = {
 
         //Checking Password
         await ComparePassword(password, user)
+
+        user.counter = await crypto.randomBytes(20).toString('hex')
         
         //Create Tokens
         const accessToken = await createAccssToken(user, email)
@@ -109,11 +113,10 @@ const Mutation = {
         user.token = accessToken
         user.refresh = refreshToken
 
-
-        User.findOneAndUpdate({_id: user._id}, (err, doc) => {
-            if(err) throw new Error("Could Not Login")
-            return doc
-        })
+        const saved = await User.findOneAndUpdate({_id: user._id},{counter: user.counter})
+            .then( res => res._doc)
+            .catch( err => null)
+        if(!saved) throw new Error("Could Not Login")
         return user
     },
 
@@ -123,7 +126,7 @@ const Mutation = {
 
     logout: async (parent, args, context, info) => {
         if(!await checkAuthorization(context.user))throw new Error("Not Authorized")
-        return User.findOneAndUpdate({_id: context.user._id},{$inc: {counter: 1}})
+        return User.findOneAndUpdate({_id: context.user._id},{counter: crypto.randomBytes(20).toString('hex')})
             .then(res => { return {acknowledged: true, success: true }})
             .catch(err => { return {acknowledged: true, success: false, message: err }})
         },
@@ -136,7 +139,7 @@ const Mutation = {
             const token = decodeRefreshToken(refreshToken)
             if(!await checkRefresh(token))throw new Error("Not Authorized")
             
-            return User.findOneAndUpdate({_id: token._id},{$inc: {counter: 1}}, { new: true })
+            return User.findOneAndUpdate({_id: token._id},{counter: crypto.randomBytes(20).toString('hex')}, { new: true })
             .then(async res => { 
                 const user = res._doc
                 //Create Tokens
