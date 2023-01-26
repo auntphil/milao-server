@@ -23,6 +23,7 @@ const { url } = await startStandaloneServer(server, {
     context: async ({req}) => {
         try{
             const token = req.headers.authorization
+            console.log(token)
             if(!token) return {user: null}
             return {user: await decodeAccessToken(token.split(" ")[1])}
         }catch(err){

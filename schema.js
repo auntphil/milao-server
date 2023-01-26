@@ -35,7 +35,7 @@ const typeDefs = `#graphql
     type Query {
         messages: [Message]
         users: [User]
-        user(id: ID!): User
+        user: User
     }
 
     input MessageInput {

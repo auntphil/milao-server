@@ -5,7 +5,7 @@ const createAccssToken = (userObject, email) => {
     return jwt.sign(
         {_id: userObject._id, email: email.toLowerCase() },
             process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '30m'}
+        { expiresIn: '5s'}
     )
 }
     
