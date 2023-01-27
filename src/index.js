@@ -1,11 +1,10 @@
 import express from 'express'
-import bodyParser from 'body-parser';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import * as dotenv from 'dotenv'
 import getDBConnection from './database.js';
-import messages from './routes/messages.js';
+import chatrooms from './routes/chatrooms.js';
 
 dotenv.config()
 
@@ -26,7 +25,7 @@ app.use(cors());
 app.use(morgan('combined'));
 
 
-app.use('/messages', (req, res, next)=>{req.conn = conn; next();}, messages)
+app.use('/chatrooms', (req, res, next)=>{req.conn = conn; next();}, chatrooms)
 
 
 // starting the server
