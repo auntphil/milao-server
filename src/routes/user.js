@@ -48,34 +48,43 @@ router
         const { username, password } = req.body
         try{
             // Finding the user
-            const result = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE username = "${username}" AND password = "${password}"`)
-
-            // Making sure only one user is found
-            if ( result.length !== 1 ){
+            const hash = await req.conn.query(`SELECT user_id, password FROM users WHERE username = "${username}"`)
+            
+            // Making sure one and only one user is found
+            if ( hash.length !== 1 ){
                 res
-                    .status(401)
-                    .json({
-                        success: false,
-                        message: 'Username or password is incorrect'
-                    })
+                .status(401)
+                .json({
+                    success: false,
+                    message: 'Username or password is incorrect'
+                })
                 return
             }
+            
+            //Checking Password
+            bcrypt.compare(password, hash[0].password, async (err, result) => {
+                const user = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE user_id = "${hash[0].user_id}"`)
+                
 
-            const { token, rtoken } = await createTokens(result[0], req.conn)
-            res
-                .status(200)
-                .json({
-                    success: true,
-                    user: result,
-                    token: token,
-                    rtoken: rtoken
-                })
-            return
+                //Creating new tokens
+                const { token, rtoken } = await createTokens(user[0], req.conn)
+
+                res
+                    .status(200)
+                    .json({
+                        success: true,
+                        user: user[0],
+                        token: token,
+                        rtoken: rtoken
+                    })
+                return
+            })
+
         } catch (err) {
             res
                 .status(500)
                 .json({
-                    success:false,
+                    success: false,
                     message: "Could not login"
                 })
             console.log(err)
@@ -105,14 +114,30 @@ router
         }
     })
 
+    // Get User with Token
+    .get('/', middleware_auth, async(req, res) => {
+        try{
+            const accessToken = req.headers.authorization.replace('Bearer: ','')
+            const user = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE token = "${accessToken}"`)
+            res
+                .status(200)
+                .json({
+                    success: true,
+                    user: user[0]
+                })
+        } catch(err){
+            throw err
+        }
+    })
+
     // Get user information
     .get('/:id', middleware_auth, async (req, res) => {
         const { id } = req.params
         try{
-            const messages = await req.conn.query(`SELECT username, displayname FROM users WHERE user_id = ${id}`)
+            const user = await req.conn.query(`SELECT username, displayname FROM users WHERE user_id = ${id}`)
             res
                 .status(200)
-                .json(messages)
+                .json(user[0])
         } catch (err) {
             throw err
         }
