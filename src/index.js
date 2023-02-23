@@ -5,6 +5,10 @@ import morgan from 'morgan';
 import * as dotenv from 'dotenv'
 import getDBConnection from './database.js';
 import chatrooms from './routes/chatrooms.js';
+import messages from './routes/messages.js';
+import reactions from './routes/reactions.js';
+import user from './routes/user.js'
+import token from './routes/token.js'
 
 dotenv.config()
 
@@ -23,9 +27,14 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cors());
 app.use(morgan('combined'));
+app.use( (req,res,next) => {req.conn = conn; next()})
 
 
-app.use('/chatrooms', (req, res, next)=>{req.conn = conn; next();}, chatrooms)
+app.use('/chatrooms', chatrooms)
+app.use('/messages', messages)
+app.use('/reactions', reactions)
+app.use('/user', user)
+app.use('/token', token)
 
 
 // starting the server
