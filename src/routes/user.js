@@ -72,10 +72,8 @@ router
                 res
                     .status(200)
                     .json({
-                        success: true,
-                        user: user[0],
-                        token: token,
-                        rtoken: rtoken
+                        access: token,
+                        refresh: rtoken
                     })
                 return
             })
