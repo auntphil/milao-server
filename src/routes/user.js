@@ -63,21 +63,30 @@ router
             
             //Checking Password
             bcrypt.compare(password, hash[0].password, async (err, result) => {
-                const user = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE user_id = "${hash[0].user_id}"`)
-                
+                if(result){
+                    //Getting User Data
+                    const user = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE user_id = "${hash[0].user_id}"`)
 
-                //Creating new tokens
-                const { token, rtoken } = await createTokens(user[0], req.conn)
-
-                res
-                    .status(200)
-                    .json({
-                        access: token,
-                        refresh: rtoken
-                    })
-                return
+                    //Creating new tokens
+                    const { token, rtoken } = await createTokens(user[0], req.conn)
+    
+                    res
+                        .status(200)
+                        .json({
+                            access: token,
+                            refresh: rtoken
+                        })
+                    return
+                } else {
+                    res
+                        .status(401)
+                        .json({
+                            success: false,
+                            message: "Could not login"
+                        })
+                    return
+                }
             })
-
         } catch (err) {
             res
                 .status(500)
