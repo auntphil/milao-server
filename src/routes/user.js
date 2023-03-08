@@ -24,18 +24,17 @@ router
                 res
                     .status(200)
                     .json({
-                        success:true,
-                        token: token,
-                        rtoken: rtoken
+                        access: token,
+                        refresh: rtoken
                     })
                 return
             } catch (err) {
                 console.log(err)
                 res
-                    .status(500)
+                    .status(409)
                     .json({
                             success:false,
-                            message: "Could not create the new user"
+                            message: "Error Creating User"
                         })
                 return
             } finally {
@@ -100,10 +99,10 @@ router
     })
 
     // Log a user out of the system
-    .post('/logout', middleware_auth, async (req, res) => {
+    .post('/logout', async (req, res) => {
+        const { user_id } = req.body
         try{
-            const user = decodeAccessToken(req.headers.authorization.replace('Bearer: ',''))
-            await req.conn.query(`UPDATE users SET token=null, rtoken=null, locker=null WHERE user_id = ${user.user_id}`)
+            await req.conn.query(`UPDATE users SET token=null, rtoken=null, locker=null WHERE user_id = ${user_id}`)
             res
                 .status(200)
                 .json({

@@ -4,9 +4,9 @@ import Randomstring from 'randomstring'
 //Create Access Token
 const createAccssToken = async (user, conn) => {
     const token = jwt.sign(
-        {user_id: user.user_id, username: user.username.toLowerCase() },
+        {user_id: user.user_id, username: user.username.toLowerCase(), displayname: user.displayname },
             process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '30m'}
+        { expiresIn: '5s'}
     )
 
     try{

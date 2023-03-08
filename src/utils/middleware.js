@@ -64,8 +64,6 @@ const middleware_refresh = ( async (req, res, next) => {
 
         const result = await req.conn.query(`SELECT user_id FROM users WHERE user_id = ${token.user_id} AND locker = "${token.locker}"`)
 
-        console.log(result)
-
         if(result.length !== 1){
             res
                 .status(401)

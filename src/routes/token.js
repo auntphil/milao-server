@@ -6,15 +6,34 @@ const router = express.Router()
 
 router
     .post('/refresh', middleware_refresh , async (req, res, next) => {
-        const result = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE user_id = ${req.token.user_id}`)
-        const { token, rtoken } = await createTokens(result[0], req.conn)
-        res
-            .status(200)
-            .json({
-                access: token,
-                refresh: rtoken
-            })
-        return
+        try{
+            const result = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE user_id = ${req.token.user_id} AND locker = "${req.token.locker}"`)
+    
+            // Making sure one and only one user is found
+            if ( result.length !== 1 ){
+                res
+                    .status(401)
+                    .json({
+                        success: false,
+                        message: 'Username or password is incorrect'
+                    })
+                return
+            }
+    
+            const { token, rtoken } = await createTokens(result[0], req.conn)
+            res
+                .status(200)
+                .json({
+                    access: token,
+                    refresh: rtoken
+                })
+            return
+        } catch (err) {
+            console.log(err)
+            res
+                .status(500)
+            return
+        }
     })
 
 export default router
