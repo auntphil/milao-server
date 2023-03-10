@@ -6,7 +6,7 @@ router
     .get('/:id', async (req, res) => {
         const { id } = req.params
         try{
-            const messages = await req.conn.query(`SELECT * FROM messages WHERE msg_id = ${id}`)
+            const messages = await req.conn.query(`SELECT * FROM messages WHERE _id = ${id}`)
             res
                 .status(200)
                 .json(messages)

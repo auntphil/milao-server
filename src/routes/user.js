@@ -16,11 +16,11 @@ router
             //Create a new user
             try{
                 const result = await req.conn.query(`INSERT INTO users (username, password) VALUES ("${username}", "${hash}")`)
-                const user = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE user_id = ${result.insertId}`)
+                const user = await req.conn.query(`SELECT _id, username, name FROM users WHERE _id = ${result.insertId}`)
                 const locker = Randomstring.generate()
                 const token = await createAccssToken(user[0], req.conn)
                 const rtoken = await createRefreshToken(user[0], locker, req.conn)
-                await req.conn.query(`UPDATE users SET token="${token}", rtoken="${rtoken}", locker="${locker}" WHERE user_id = ${user[0].user_id}`)
+                await req.conn.query(`UPDATE users SET token="${token}", rtoken="${rtoken}", locker="${locker}" WHERE _id = ${user[0].user_id}`)
                 res
                     .status(200)
                     .json({
@@ -47,7 +47,7 @@ router
         const { username, password } = req.body
         try{
             // Finding the user
-            const hash = await req.conn.query(`SELECT user_id, password FROM users WHERE username = "${username}"`)
+            const hash = await req.conn.query(`SELECT _id, password FROM users WHERE username = "${username}"`)
             
             // Making sure one and only one user is found
             if ( hash.length !== 1 ){
@@ -64,7 +64,7 @@ router
             bcrypt.compare(password, hash[0].password, async (err, result) => {
                 if(result){
                     //Getting User Data
-                    const user = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE user_id = "${hash[0].user_id}"`)
+                    const user = await req.conn.query(`SELECT _id, username, name FROM users WHERE _id = "${hash[0]._id}"`)
 
                     //Creating new tokens
                     const { token, rtoken } = await createTokens(user[0], req.conn)
@@ -102,7 +102,7 @@ router
     .post('/logout', async (req, res) => {
         const { user_id } = req.body
         try{
-            await req.conn.query(`UPDATE users SET token=null, rtoken=null, locker=null WHERE user_id = ${user_id}`)
+            await req.conn.query(`UPDATE users SET token=null, rtoken=null, locker=null WHERE _id = ${user_id}`)
             res
                 .status(200)
                 .json({
@@ -124,7 +124,7 @@ router
     .get('/', middleware_auth, async(req, res) => {
         try{
             const accessToken = req.headers.authorization.replace('Bearer: ','')
-            const user = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE token = "${accessToken}"`)
+            const user = await req.conn.query(`SELECT _id, username, name FROM users WHERE token = "${accessToken}"`)
             res
                 .status(200)
                 .json({
@@ -140,7 +140,7 @@ router
     .get('/:id', middleware_auth, async (req, res) => {
         const { id } = req.params
         try{
-            const user = await req.conn.query(`SELECT username, displayname FROM users WHERE user_id = ${id}`)
+            const user = await req.conn.query(`SELECT username, name FROM users WHERE _id = ${id}`)
             res
                 .status(200)
                 .json(user[0])

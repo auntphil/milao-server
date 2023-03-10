@@ -7,7 +7,7 @@ const router = express.Router()
 router
     .post('/refresh', middleware_refresh , async (req, res, next) => {
         try{
-            const result = await req.conn.query(`SELECT user_id, username, displayname FROM users WHERE user_id = ${req.token.user_id} AND locker = "${req.token.locker}"`)
+            const result = await req.conn.query(`SELECT _id, username, name FROM users WHERE _id = ${req.token._id} AND locker = "${req.token.locker}"`)
     
             // Making sure one and only one user is found
             if ( result.length !== 1 ){

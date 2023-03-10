@@ -4,7 +4,7 @@ const middleware_auth = ( async (req, res, next) => {
     const accessToken = req.headers.authorization.replace('Bearer: ','')
     const token = decodeAccessToken(accessToken)
 
-    const results = await req.conn.query(`SELECT user_id FROM users WHERE token = "${accessToken}"`)
+    const results = await req.conn.query(`SELECT _id FROM users WHERE token = "${accessToken}"`)
     if(results.length !== 1){
         res
             .status(401)
@@ -62,7 +62,7 @@ const middleware_refresh = ( async (req, res, next) => {
             return
         }
 
-        const result = await req.conn.query(`SELECT user_id FROM users WHERE user_id = ${token.user_id} AND locker = "${token.locker}"`)
+        const result = await req.conn.query(`SELECT _id FROM users WHERE _id = ${token._id} AND locker = "${token.locker}"`)
 
         if(result.length !== 1){
             res

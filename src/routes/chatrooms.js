@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { response } from 'express'
 
 const router = express.Router()
 
@@ -6,7 +6,7 @@ router
     //Get a list of all Chatrooms and the latest message
     .get('/', async (req, res) => {
         try{
-            const result = await req.conn.query(`SELECT chatrooms.chatroom_id, title, (SELECT content FROM messages WHERE chatroom_id = chatrooms.chatroom_id ORDER BY timestamp DESC LIMIT 1) AS latest_message,  (SELECT user_id FROM messages WHERE chatroom_id = chatrooms.chatroom_id ORDER BY timestamp DESC LIMIT 1) AS latest_sender FROM chatrooms`)
+            const result = await req.conn.query(`SELECT chatrooms._id, title, (SELECT text FROM messages WHERE chatroom_id = chatrooms._id ORDER BY createdat DESC LIMIT 1) AS latest_message,  (SELECT user_id FROM messages WHERE chatroom_id = chatrooms._id ORDER BY timestamp DESC LIMIT 1) AS latest_sender FROM chatrooms`)
             res.send(result)
         } catch (err) {
             throw err
@@ -17,12 +17,17 @@ router
         const { id } = req.params
         try{
             //Getting Messages from a chatroom
-            const messages = await req.conn.query(`SELECT * FROM messages WHERE chatroom_id = ${id} ORDER BY timestamp DESC`)
+            const messages = await req.conn.query(`SELECT _id, text, createdAt, user_id FROM messages WHERE chatroom_id = ${id} ORDER BY createdat DESC`)
             let final = messages
             for( let m = 0; m < final.length; m++){
                 //Getting Reactions for each message
-                const reactions = await req.conn.query(`SELECT reaction, user_id FROM message_reactions WHERE msg_id = ${final[m].msg_id}`)
-                final[m].reactions = reactions
+                const user = await req.conn.query(`SELECT _id, name, username, avatar FROM users WHERE _id = ${final[m].user_id}`)
+                if(user[0].name == null || user[0].name == undefined || user[0].name.length() == 0){
+                    user[0].name = user[0].username
+                }
+                delete user[0].username
+                final[m].user = user[0]
+                delete final[m].user_id
             }
             res
                 .status(200)
@@ -35,7 +40,7 @@ router
     .post('/', async (req, res) => {
         const { content, user_id, chatroom_id } = req.body
         try{
-            const result = await req.conn.query(`INSERT INTO messages (content, user_id, chatroom_id) VALUES ("${content}", ${user_id}, ${chatroom_id})`)
+            const result = await req.conn.query(`INSERT INTO messages (text, user_id, chatroom_id) VALUES ("${content}", ${user_id}, ${chatroom_id})`)
             res
                 .status(200)
                 .json({success:true})
