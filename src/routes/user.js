@@ -20,7 +20,7 @@ router
                 const locker = Randomstring.generate()
                 const token = await createAccssToken(user[0], req.conn)
                 const rtoken = await createRefreshToken(user[0], locker, req.conn)
-                await req.conn.query(`UPDATE users SET token="${token}", rtoken="${rtoken}", locker="${locker}" WHERE _id = ${user[0].user_id}`)
+                await req.conn.query(`UPDATE users SET token="${token}", rtoken="${rtoken}", locker="${locker}" WHERE _id = ${user[0]._id}`)
                 res
                     .status(200)
                     .json({
@@ -100,9 +100,9 @@ router
 
     // Log a user out of the system
     .post('/logout', async (req, res) => {
-        const { user_id } = req.body
+        const { _id } = req.body
         try{
-            await req.conn.query(`UPDATE users SET token=null, rtoken=null, locker=null WHERE _id = ${user_id}`)
+            await req.conn.query(`UPDATE users SET token=null, rtoken=null, locker=null WHERE _id = ${_id}`)
             res
                 .status(200)
                 .json({

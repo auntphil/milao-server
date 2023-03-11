@@ -21,7 +21,7 @@ const createAccssToken = async (user, conn) => {
 //creating refresh token
 const createRefreshToken = async (user, locker, conn) => {
     const token = jwt.sign(
-        {_id: user._id, username: user.username, locker: locker },
+        {_id: user._id, username: user.username.toLowerCase(), locker: locker },
         process.env.REFRESH_TOKEN_SECRET,
         {}
     )

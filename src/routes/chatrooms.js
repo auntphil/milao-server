@@ -17,7 +17,7 @@ router
         const { id } = req.params
         try{
             //Getting Messages from a chatroom
-            const messages = await req.conn.query(`SELECT _id, text, createdAt, user_id FROM messages WHERE chatroom_id = ${id} ORDER BY createdat DESC`)
+            const messages = await req.conn.query(`SELECT _id, text, createdAt, user_id, sent FROM messages WHERE chatroom_id = ${id} ORDER BY createdat DESC`)
             let final = messages
             for( let m = 0; m < final.length; m++){
                 //Getting Reactions for each message
@@ -38,9 +38,19 @@ router
     })
     //Send a message
     .post('/', async (req, res) => {
-        const { content, user_id, chatroom_id } = req.body
+        const data = req.body
+        let messages = []
+        data.map( message => {
+            let msg = []
+            msg.push(`"${message._id}"`)
+            msg.push(`"${message.text}"`)
+            msg.push(message.user._id)
+            msg.push(`"${message.createdAt}"`)
+            msg.push(1)
+            messages.push(msg)
+        })
         try{
-            const result = await req.conn.query(`INSERT INTO messages (text, user_id, chatroom_id) VALUES ("${content}", ${user_id}, ${chatroom_id})`)
+            const result = await req.conn.query(`INSERT INTO messages (_id, text, user_id, createdAt, chatroom_id) VALUES (${messages})`)
             res
                 .status(200)
                 .json({success:true})
