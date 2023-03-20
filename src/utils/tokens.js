@@ -10,7 +10,7 @@ const createAccssToken = async (user, conn) => {
     )
 
     try{
-        await conn.query(`UPDATE users SET token = "${token}" WHERE _id = ${user._id}`)
+        await conn.query(`UPDATE users SET token = "${token}" WHERE _id = "${user._id}"`)
     } catch {
     
     }
@@ -27,7 +27,7 @@ const createRefreshToken = async (user, locker, conn) => {
     )
 
     try{
-        await conn.query(`UPDATE users SET rtoken = "${token}" WHERE _id = ${user._id}`)
+        await conn.query(`UPDATE users SET rtoken = "${token}" WHERE _id = "${user._id}"`)
     } catch {
         
     }
@@ -55,7 +55,7 @@ const decodeRefreshToken = (token) => {
 const createTokens = async (user, conn) => {
     // Creating the Users Locker Token
     const locker = Randomstring.generate()
-    await conn.query(`UPDATE users SET locker = "${locker}" WHERE _id = ${user._id}`)
+    await conn.query(`UPDATE users SET locker = "${locker}" WHERE _id = "${user._id}"`)
 
     // Creating the Users Access Token
     const token = await createAccssToken(user, conn)

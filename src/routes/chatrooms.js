@@ -1,6 +1,16 @@
-import express, { response } from 'express'
+import express, { json, response } from 'express'
 
 const router = express.Router()
+
+let clients = []
+
+function chatroomUpdate(data, id){
+    const found = clients.findIndex( obj => obj._id == id)
+    if(found >= 0){
+        console.log(`Sending to Client`)
+        clients[found].clients.forEach(client => client.res.write(`data: ${JSON.stringify(data)}\n\n`))
+    }
+}
 
 router
     //Get a list of all Chatrooms and the latest message
@@ -21,7 +31,7 @@ router
             let final = messages
             for( let m = 0; m < final.length; m++){
                 //Getting Reactions for each message
-                const user = await req.conn.query(`SELECT _id, name, username, avatar FROM users WHERE _id = ${final[m].user_id}`)
+                const user = await req.conn.query(`SELECT _id, name, username, avatar FROM users WHERE _id = "${final[m].user_id}"`)
                 if(user[0].name == null || user[0].name == undefined || user[0].name.length() == 0){
                     user[0].name = user[0].username
                 }
@@ -36,24 +46,68 @@ router
             throw err
         }
     })
+    .get('/:id/events', (req, res, next) => {
+        console.log('Events')
+        const { id } = req.params
+        const headers = {
+            'Content-Type': 'text/event-stream',
+            'Connection': 'keep-alive',
+            'Cache-Control': 'no-cache'
+        }
+        res.writeHead(200, headers)
+
+        let chatroomData = []
+        const data = `data: ${JSON.stringify(chatroomData)}\n\n`
+
+        const clientId = Date.now();
+        const newClient = {
+            _id: clientId,
+            res
+        }
+
+        const found = clients.findIndex( obj => obj._id == id)
+
+        if(!found >= 0){
+            let newRoom = {
+                _id: id,
+                clients: []
+            }
+            newRoom.clients.push(newClient)
+            clients.push(newRoom)
+        }else{
+            clients[id].clients.push(newClient)
+        }
+
+
+        req.on('close', () => {
+            console.log(`${clientId} Connection Closed`)
+            clients = clients.filter(client => client.id !== clientId)
+            }
+        )
+    })
     //Send a message
-    .post('/', async (req, res) => {
-        const data = req.body
-        let messages = []
-        data.map( message => {
-            let msg = []
-            msg.push(`"${message._id}"`)
-            msg.push(`"${message.text}"`)
-            msg.push(message.user._id)
-            msg.push(`"${message.createdAt}"`)
-            msg.push(1)
-            messages.push(msg)
-        })
+    .post('/:id', async (req, res) => {
+        let chatroomData = {}
         try{
+            const { id } = req.params
+            const data = req.body
+            let messages = []
+            data.map( message => {
+                let msg = []
+                msg.push(`"${message._id}"`)
+                msg.push(`"${message.text}"`)
+                msg.push(`"${message.user._id}"`)
+                msg.push(`"${message.createdAt}"`)
+                msg.push(id)
+                messages.push(msg)
+            })
             const result = await req.conn.query(`INSERT INTO messages (_id, text, user_id, createdAt, chatroom_id) VALUES (${messages})`)
+            chatroomData.message = [...messages]
+            chatroomUpdate(chatroomData, id)
             res
                 .status(200)
                 .json({success:true})
+
         } catch (err) {
             res
                 .status(500)

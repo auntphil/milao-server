@@ -1,6 +1,7 @@
 import express from 'express'
 import bcrypt from 'bcrypt'
 import Randomstring from 'randomstring'
+import { v4 as uuidv4 } from 'uuid';
 
 import { createAccssToken, createRefreshToken, createTokens, decodeAccessToken } from '../utils/tokens.js'
 import { middleware_auth } from '../utils/middleware.js'
@@ -15,12 +16,13 @@ router
         bcrypt.hash(password, 8, async (err, hash) => {
             //Create a new user
             try{
-                const result = await req.conn.query(`INSERT INTO users (username, password) VALUES ("${username}", "${hash}")`)
+                const id = uuidv4()
+                const result = await req.conn.query(`INSERT INTO users (_id, username, password) VALUES ("${id}","${username}", "${hash}")`)
                 const user = await req.conn.query(`SELECT _id, username, name FROM users WHERE _id = ${result.insertId}`)
                 const locker = Randomstring.generate()
                 const token = await createAccssToken(user[0], req.conn)
                 const rtoken = await createRefreshToken(user[0], locker, req.conn)
-                await req.conn.query(`UPDATE users SET token="${token}", rtoken="${rtoken}", locker="${locker}" WHERE _id = ${user[0]._id}`)
+                await req.conn.query(`UPDATE users SET token="${token}", rtoken="${rtoken}", locker="${locker}" WHERE _id = "${user[0]._id}"`)
                 res
                     .status(200)
                     .json({
@@ -102,7 +104,7 @@ router
     .post('/logout', async (req, res) => {
         const { _id } = req.body
         try{
-            await req.conn.query(`UPDATE users SET token=null, rtoken=null, locker=null WHERE _id = ${_id}`)
+            await req.conn.query(`UPDATE users SET token=null, rtoken=null, locker=null WHERE _id = "${_id}"`)
             res
                 .status(200)
                 .json({
